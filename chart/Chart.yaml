@@ -1,0 +1,4 @@
+apiVersion: v2
+name: noname-script
+description: A freshly created template-script
+version: 0.0.1
