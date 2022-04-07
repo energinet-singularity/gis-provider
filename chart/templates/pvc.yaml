@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gis-provider-pvc
+spec:
+  accessModes:
+    - {{ .Values.gisproviderDataVolume.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.gisproviderDataVolume.size }}
+  storageClassName: {{ .Values.gisproviderDataVolume.storageClass }}

@@ -1,1 +1,5 @@
-
+numpy>=1.22.3
+pandas>=1.4.2
+openpyxl>=3.0.9
+xlrd>=1.0.0
+git+https://github.com/energinet-singularity/singupy.git#egg=singupy

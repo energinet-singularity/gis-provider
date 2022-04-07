@@ -1,4 +1,9 @@
 apiVersion: v2
-name: noname-script
-description: A freshly created template-script
-version: 0.0.1
+name: gis-provider
+description: A Helm chart for providing GIS geometric coordinates to the DLR algorithm.
+version: 1.0.0
+
+dependencies:
+  - name: file-mover
+    repository: "https://energinet-singularity.github.io/helm-registry/"
+    version: 1.1.2
