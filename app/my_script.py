@@ -1,3 +1,4 @@
+from tokenize import Name
 import pandas as pd
 import numpy as np
 import logging
@@ -67,15 +68,18 @@ def convert_gis_name_to_ets_name(file_path: str):
 
     # Find unique names
     Name_list_unique = np.unique(gis_name_list)
-
+    print(Name_list_unique)
     good_list = []
     bad_list = []
 
     for ln in Name_list_unique:
-        match = re.match('^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,5})$', ln)
+        match = re.match('^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$', ln)
         if match:
             volt = convert_voltage_level_to_letter(int(match.group('volt')))
-            good_list.append(f"{volt}_{match.group('STN1')}-{match.group('STN2')}")
+            ets_name = f"{volt}_{match.group('STN1')}-{match.group('STN2')}"
+            if match.group('id') is not None:
+                ets_name += f'-{match.group("id")}'
+            good_list.append(ets_name)
         else:
             bad_list.append(ln)
 
