@@ -59,8 +59,8 @@ def test_creating_dict_with_gis_coordinates_and_ets_mrid():
     # Can not say what the solution is going to be at the given time needs to be reevaluated
     # WHAT DO?????!!!!
     TEST_DATA = {'OBJECTID':           ['1', '2', '3', '4'],
-                 'ACLINESEGMENT_MRID': ['66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446'],
-                 'LINE_EMSNAME':       ['E_EEE-FFF-1', 'E_EEE-FFF-2', 'E_GGG-HHH', 'D_CCC-DDD', 'C_III-ÆØÅ', 'C_ASK-ERS'],
+                 'ACLINESEGMENT_MRID': ['66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446'],
+                 'LINE_EMSNAME':       ['E_EEE-FFF-1', 'E_EEE-FFF-1', 'E_EEE-FFF-1', 'E_EEE-FFF-1'],
                  'Long_DD':            ['12.297432', '12.297356', '12.297335', '12.297076'],
                  'Lat_DD':             ['57.404563', '57.404166', '57.403650', '57.401170']
                  }
