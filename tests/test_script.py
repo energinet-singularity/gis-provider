@@ -58,7 +58,13 @@ def test_creating_dict_with_gis_coordinates_and_ets_mrid():
 
     # Can not say what the solution is going to be at the given time needs to be reevaluated
     # WHAT DO?????!!!!
-    TEST_DATAFRAME = {'ACLINESEGMENT_MRID':    ['E_EEE-FFF-1']}
+    TEST_DATA = {'OBJECTID':           ['1', '2', '3', '4'],
+                 'ACLINESEGMENT_MRID': ['66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446', '66b4596e-asfv-tyuy-5478-bd208f26a446'],
+                 'LINE_EMSNAME':       ['E_EEE-FFF-1', 'E_EEE-FFF-2', 'E_GGG-HHH', 'D_CCC-DDD', 'C_III-ÆØÅ', 'C_ASK-ERS'],
+                 'Long_DD':            ['12.297432', '12.297356', '12.297335', '12.297076'],
+                 'Lat_DD':             ['57.404563', '57.404166', '57.403650', '57.401170']
+                 }
     
-    assert code.creating_dict_with_gis_coordinates_and_ets_mrid(gis_ets_name, mrid_ets_name_dict) == TEST_DATAFRAME
+    TEST_DATAFRAME = pd.DataFrame(TEST_DATA)
 
+    assert code.creating_dict_with_gis_coordinates_and_ets_mrid(gis_ets_name, mrid_ets_name_dict) == TEST_DATAFRAME
