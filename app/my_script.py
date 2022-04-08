@@ -7,7 +7,6 @@ import re
 # Initialize log
 log = logging.getLogger(__name__)
 
-
 # Constants / filepaths
 # GIS_FILEPATH2 = os.path.dirname(__file__) + '/../tests/valid-testdata/GIS_data.xlsx'
 GIS_FILEPATH = os.path.dirname(__file__) + '/../real-data/GIS_Driftstr_luftledning_koordinater_decimalgrader_05042022.xls'
@@ -16,46 +15,74 @@ MRID_KEY_NAME = 'LINE_EMSNAME'
 MRID_VALUE_NAME = 'ACLINESEGMENT_MRID'
 MRID_EXPECTED_HEADER_NAMES = ['ACLINESEGMENT_MRID', 'LINE_EMSNAME', 'DLR_ENABLED']
 
+def convert_voltage_level_to_letter(voltage_level: int) -> str:
+    """Converts voltage level to voltage letter representation.
+
+    Parameters
+    ----------
+    voltage_level : int
+        Voltage level in kV.
+
+    Returns
+    -------
+    str
+        Voltage letter.
+
+    Example
+    -------
+        convert_voltage_level_to_letter(400)
+        C
+    """
+    if voltage_level >= 420:
+        voltage_letter = 'B'
+    elif 380 <= voltage_level < 420:
+        voltage_letter = 'C'
+    elif 220 <= voltage_level < 380:
+        voltage_letter = 'D'
+    elif 110 <= voltage_level < 220:
+        voltage_letter = 'E'
+    elif 60 <= voltage_level < 110:
+        voltage_letter = 'F'
+    elif 45 <= voltage_level < 60:
+        voltage_letter = 'G'
+    elif 30 <= voltage_level < 45:
+        voltage_letter = 'H'
+    elif 20 <= voltage_level < 30:
+        voltage_letter = 'J'
+    elif 10 <= voltage_level < 20:
+        voltage_letter = 'K'
+    elif 6 <= voltage_level < 10:
+        voltage_letter = 'L'
+    elif 1 <= voltage_level < 6:
+        voltage_letter = 'M'
+    elif voltage_level < 1:
+        voltage_letter = 'N'
+
+    return voltage_letter
+
+
 def convert_gis_name_to_ets_name(file_path: str):
     GIS_COLUMN_NAME = 'Name'
-    gis_dataframe = pd.read_excel(io=file_path)
+    gis_name_list = pd.read_excel(io=file_path)[GIS_COLUMN_NAME].tolist()
 
-    # Make list of names from GIS data
-    Name_list = gis_dataframe[GIS_COLUMN_NAME].tolist()
     # Find unique names
-    Name_list_unique = np.unique(Name_list)
+    Name_list_unique = np.unique(gis_name_list)
 
-    # Splitting list (consider reqular expression!!)
-    # test_list = [re.findall("_",Name_list_unique) for s in Name_list_unique]
-    new_list_1 = [i.split('_') for i in Name_list_unique]
-    new_list_2 = []
-    new_list_3 = []
-    new_list_4 = []
-    new_list_5 = []
+    good_list = []
+    bad_list = []
 
-    for i in new_list_1:
-        if len(i) == 3:
-            new_list_2.append(i)
-        elif len(i) != 3:
-            new_list_3.append(i)
+    for ln in Name_list_unique:
+        match = re.match('^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,5})$', ln)
+        if match:
+            volt = convert_voltage_level_to_letter(int(match.group('volt')))
+            good_list.append(f"{volt}_{match.group('STN1')}-{match.group('STN2')}")
         else:
-            print(f'Unexpected line seqment name in the column "{GIS_COLUMN_NAME}"')
+            bad_list.append(ln)
 
-    # print(new_list_3)
+    print(f'First list {good_list}\n')
+    print(f'Second list {bad_list}\n')
 
-    for k in new_list_2:
-        for i in k:
-            if len(i) > 6:
-                new_list_4.append(k)
 
-    print(new_list_4)
-
-    new_list_5 = new_list_2
-    for i in new_list_4:
-        if i in new_list_2:
-            new_list_5.remove(i)
-
-    print(new_list_5)
 
     translated_gis_name_list = ''
     return translated_gis_name_list
