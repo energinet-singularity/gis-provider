@@ -13,6 +13,7 @@ GIS_FILEPATH = os.path.dirname(__file__) + '/../real-data/GIS_Driftstr_luftledni
 MRID_FILEPATH = os.path.dirname(__file__) + '/../real-data/seg_line_mrid_PREPROD.csv'
 MRID_EXPECTED_HEADER_NAMES = ['ACLINESEGMENT_MRID', 'LINE_EMSNAME', 'DLR_ENABLED']
 
+
 def convert_voltage_level_to_letter(voltage_level: int) -> str:
     """Converts voltage level to voltage letter representation.
 
