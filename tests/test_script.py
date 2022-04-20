@@ -6,15 +6,6 @@ import app.my_script as code
 GIS_FILEPATH = os.path.dirname(__file__) + '/../tests/valid-testdata/GIS_data.xlsx'
 MRID_FILEPATH = os.path.dirname(__file__) + '/../tests/valid-testdata/DLR_MRID.csv'
 
-'''
-OBJECTID    |   Name        |   ORIG_FID    |   Long_DD     |   Lat_DD      |
-1           |   EEE_150_FFF |   1           |   12,29743239 |   57,40456252 |
-2           |   EEE_150_FFF |   1           |   12,29735644 |   57,40416601 |
-3           |   EEE_150_FFF |   1           |   12,29733545 |   57,4036495  |
-4           |   EEE_150_FFF |   1           |   12,29707574 |   57,40117025 |
-
-'''
-
 
 def test_parse_dataframe_columns_to_dictionary():
     MRID_KEY_NAME = 'LINE_EMSNAME'
