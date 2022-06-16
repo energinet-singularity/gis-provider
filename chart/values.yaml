@@ -59,7 +59,7 @@ tolerations: []
 
 EnvVars:
   API_PORT: 5000
-  API_DB_NAME: "API_DB_NAME"
+  API_DB_NAME: "GIS_DATA"
   #GIS_FILENAME: ""
   #GIS_SHEET: ""
   #GIS_COLUMN_NAME: ""
