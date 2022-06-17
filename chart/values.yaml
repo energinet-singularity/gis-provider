@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/energinet-singularity/gis-provider/energinet-singularity/gis-provider
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  tag: "1.0.1"
 
 file-mover:
   folderMounts:
@@ -59,7 +59,7 @@ tolerations: []
 
 EnvVars:
   API_PORT: 5000
-  API_DB_NAME: "API_DB_NAME"
+  API_DB_NAME: "GIS_DATA"
   #GIS_FILENAME: ""
   #GIS_SHEET: ""
   #GIS_COLUMN_NAME: ""
