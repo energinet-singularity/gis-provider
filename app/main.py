@@ -244,7 +244,7 @@ def map_gis_to_ets_line_name(
     return gis_line_name_to_ets_line_name, non_translatable
 
 
-def enrich_gis_dataframe(
+def enrich_dlr_dataframe(
     gis_dataframe: pd.DataFrame,
     mrid_dataframe: pd.DataFrame,
     gis_line_name_to_ets_line_name: dict[str, str],
@@ -432,7 +432,7 @@ if __name__ == "__main__":
                 )
 
                 # Creating the dlr dataframe with ETS data enriched with gis data
-                enriched_dlr_dataframe = enrich_gis_dataframe(
+                enriched_gis_data = enrich_dlr_dataframe(
                     gis_dataframe,
                     mrid_dataframe,
                     translate_gis_name_to_ets,
@@ -442,10 +442,10 @@ if __name__ == "__main__":
                 )
 
                 log.info("Data collection is done.")
-                log.debug(f"Dataframe is: {enriched_dlr_dataframe}")
+                log.debug(f"Dataframe is: {enriched_gis_data}")
 
                 # Passing the new dataframe to the API
-                gis_data_api[API_DB_NAME] = enriched_dlr_dataframe
+                gis_data_api[API_DB_NAME] = enriched_gis_data
 
             else:
                 log.info(

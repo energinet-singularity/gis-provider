@@ -94,7 +94,7 @@ def test_creating_dataframe_with_gis_coordinates_and_ets_mrid():
 
     TEST_DATAFRAME = pd.read_csv(TEST_DATA_FILEPATH, delimiter=";", encoding="cp1252")
 
-    dataframe = code.enrich_gis_dataframe(
+    dataframe = code.enrich_dlr_dataframe(
         gis_dataframe,
         mrid_dataframe,
         translated_names,

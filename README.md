@@ -48,7 +48,7 @@ The script takes three files as input:
 For more information on how the files are structured please look into the tests/valid-testdata folder that is supplied in the repository.
 
 ### Output
-The output will be an API that can be queried with SQL to get information from the enriched GIS dataframe.
+The output will be an API that can be queried with SQL to get information from a data enriched GIS dataframe.
 
 ## Getting Started
 The quickest way to have something running is through docker (see the section [Running container](#running-container)).
@@ -119,6 +119,10 @@ See the open issues for a full list of proposed features (and known issues).
 If you are facing unidentified issues with the application, please submit an issue or ask the authors.
 
 ## Version History
+* 1.1.0:
+    * Fixing issue #3 on Github
+* 1.0.1:
+    * Added a service to the helm chart
 * 1.0.0:
     * First production-ready version
 
