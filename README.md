@@ -14,35 +14,36 @@ The script is intended to be run within a kubernetes setup, so a Dockerfile is p
 |DEBUG|Set to 'TRUE' to enable debug logging|FALSE|
 <br/>
 
-#### Variables for the data that should be enriched
+#### GIS environment variables
 | Name | Description | Default |
 |--|--|--|
-|GIS_FILENAME|Name of the file containing GIS data|GIS_Driftstr_luftledning_koordinater_decimalgrader_05042022.xls|
-|GIS_SHEET|Name of the sheet containing GIS data|GIS_Driftstr_luftledning_koordi|
-|GIS_COLUMN_NAME|The column name to identify which column is going to be translated|Name|
+|GIS_FILENAME|Name of the file containing GIS data|GIS_Driftstr_luftledning_koordinater.xls|
+|GIS_SHEET_NAME|Name of the sheet containing GIS data|GIS_Driftstr_luftledning_koordi|
+|GIS_LINE_NAME_COLUMN|The column name to identify which column is going to be translated|Name|
+|LINE_NAME_REGEX|The regex expression used to translate between GIS and AClinesegment name|r"^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$"|
 <br/>
 
-#### ETS mapping environment variables 
+#### AClinesegment environment variables 
 | Name | Description | Default |
 |--|--|--|
-|ETS_FILENAME|Filename of the csv file|seg_line_mrid_PROD.csv|
-|ETS_COLUMN_DLR_ENABLED|Name of column indicating if DLR should be enabled or not|DLR_ENABLED|
-|ETS_COLUMN_MRID|Name of the column containing the unique identifier|ACLINESEGMENT_MRID|
-|ETS_COLUMN_NAME|The column name that is going to link the two files together|LINE_EMSNAME|
+|ACLINESEGMENT_FILENAME|Filename of the csv file|seg_line_mrid_PROD.csv|
+|ACLINESEGMENT_DLR_ENABLED_COLUMN|Name of column indicating if DLR should be enabled or not|DLR_ENABLED|
+|ACLINESEGMENT_MRID_NAME_COLUMN|Name of the column containing the unique identifier|ACLINESEGMENT_MRID|
+|ACLINESEGMENT_LINE_NAME_COLUMN|The column name that is going to link the two files together|LINE_EMSNAME|
 <br/>
 
-#### Mapping variables to enforce a specific translation
+#### GIS to AClinesegment mapping variables (use to enforce a specific translation)
 | Name | Description | Default |
 |--|--|--|
-|MAP_FILENAME|Name of the mapping file|Gis_map.xlsx|
-|MAP_COLUMN_GIS_NAME|Name of the column with existing translated name in the GIS dataframe|GIS Name|
-|MAP_COLUMN_ETS_NAME|Name of the column that state the new translated name|ETS Name|
-|MAP_SHEET|Specific sheet to use in the excel file|GisMapping|
+|GIS_TO_ETS_MAP_FILENAME|Name of the mapping file|Gis_map.xlsx|
+|MAP_GIS_LINE_NAME_COLUMN|Name of the column with existing translated name in the GIS dataframe|GIS LINE NAME|
+|MAP_ETS_LINE_NAME_COLUMN|Name of the column that state the new translated name|ETS LINE NAME|
+|MAP_SHEET_NAME|Specific sheet to use in the excel file|GisMapping|
 
 ### Input
 The script takes three files as input:
-- The GIS excel file
-- The ETS csv file containing ETS name, MRID and enabled (Yes/No) state for each line
+- The GIS file
+- The AClinesegment file containing AClinesegment name, MRID and DLR enabled (Yes/No) state for each line
 - A mapping/translation file to forced translation of specific names (this file is optional)
 
 For more information on how the files are structured please look into the tests/valid-testdata folder that is supplied in the repository.
