@@ -1,7 +1,7 @@
 apiVersion: v2
 name: gis-provider
 description: A Helm chart for providing GIS geometric coordinates to the DLR algorithm.
-version: 1.0.1
+version: 1.1.0
 
 dependencies:
   - name: file-mover

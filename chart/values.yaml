@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/energinet-singularity/gis-provider/energinet-singularity/gis-provider
   pullPolicy: IfNotPresent
-  tag: "1.0.1"
+  tag: "1.1.0"
 
 file-mover:
   folderMounts:
