@@ -1,23 +1,28 @@
 import os
 import pandas as pd
-import app.main as code
+import app.main as main
 
 # Location of test files used in the different test
-testdata_path = f"{os.path.dirname(__file__)}/../tests/valid-testdata"
-GIS_FILEPATH = (
-    f"{testdata_path}/GIS_Driftstr_luftledning_koordinater_decimalgrader_05042022.xls"
-)
-MRID_FILEPATH = f"{testdata_path}/seg_line_mrid_PROD.csv"
-MAP_FILEPATH = f"{testdata_path}/Gis_map.xlsx"
-TEST_DATA_FILEPATH = f"{testdata_path}/test_dataframe.csv"
+TESTDATA_PATH = f"{os.path.dirname(__file__)}/../tests/valid-testdata/"
+GIS_FILEPATH = f"{TESTDATA_PATH}" + "GIS_Driftstr_luftledning_koordinater.xls"
+ACLINESEGMENT_FILEPATH = f"{TESTDATA_PATH}" + "seg_line_mrid_PROD.csv"
+GIS_TO_ETS_MAP_FILEPATH = f"{TESTDATA_PATH}" + "Gis_map.xlsx"
+TEST_DATA_FILEPATH = f"{TESTDATA_PATH}" + "test_dataframe.csv"
+
+# Input variables to the test functions
+ACLINESEGMENT_LINE_NAME_COLUMN = "LINE_EMSNAME"
+ACLINESEGMENT_MRID_NAME_COLUMN = "ACLINESEGMENT_MRID"
+LINE_NAME_REGEX = r"^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$"
+GIS_SHEET_NAME = "GIS_Driftstr_luftledning_koordi"
+GIS_LINE_NAME_COLUMN = "Name"
+MAP_GIS_LINE_NAME_COLUMN = "GIS LINE NAME"
+MAP_ETS_LINE_NAME_COLUMN = "ETS LINE NAME"
+MAP_SHEET_NAME = "GisMapping"
 
 
 def test_parse_dataframe_columns_to_dictionary():
-    # Input variables to the function
-    MRID_KEY_NAME = "LINE_EMSNAME"
-    MRID_VALUE_NAME = "ACLINESEGMENT_MRID"
 
-    mrid_dataframe = code.load_mrid_csv_file(MRID_FILEPATH)
+    aclinesegment_dataframe = main.load_mrid_csv_file(ACLINESEGMENT_FILEPATH)
 
     # Expected dictionary from the dataframe
     TEST_DICTIONARY = {
@@ -30,8 +35,10 @@ def test_parse_dataframe_columns_to_dictionary():
     }
 
     assert (
-        code.parse_dataframe_columns_to_dictionary(
-            mrid_dataframe, MRID_KEY_NAME, MRID_VALUE_NAME
+        main.parse_dataframe_columns_to_dictionary(
+            aclinesegment_dataframe,
+            ACLINESEGMENT_LINE_NAME_COLUMN,
+            ACLINESEGMENT_MRID_NAME_COLUMN,
         )
         == TEST_DICTIONARY
     )
@@ -39,12 +46,9 @@ def test_parse_dataframe_columns_to_dictionary():
 
 def test_convert_gis_names_to_ets_names():
 
-    SHEET_NAME = "GIS_Driftstr_luftledning_koordi"
-    GIS_COLUMN_NAME = "Name"
-    REGEX = r"^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$"
-    gis_dataframe = code.parse_excel_sheets_to_dataframe(GIS_FILEPATH, [SHEET_NAME])[
-        SHEET_NAME
-    ]
+    gis_dataframe = main.parse_excel_sheets_to_dataframe(
+        GIS_FILEPATH, [GIS_SHEET_NAME]
+    )[GIS_SHEET_NAME]
 
     # The expected dict of names
     TEST_DICTIONARY = {
@@ -57,50 +61,45 @@ def test_convert_gis_names_to_ets_names():
     }
 
     assert (
-        code.map_gis_to_ets_line_name(gis_dataframe, GIS_COLUMN_NAME, REGEX)[0]
+        main.map_gis_to_ets_line_name(
+            gis_dataframe, GIS_LINE_NAME_COLUMN, LINE_NAME_REGEX
+        )[0]
         == TEST_DICTIONARY
     )
 
 
 def test_creating_dataframe_with_gis_coordinates_and_ets_mrid():
-    ETS_COLUMN_NAME = "LINE_EMSNAME"
-    GIS_COLUMN_NAME = "Name"
-    SHEET_NAME = "GIS_Driftstr_luftledning_koordi"
-    MAP_COLUMN_GIS_NAME = "GIS Name"
-    MAP_COLUMN_ETS_NAME = "ETS Name"
-    MAP_SHEET = "GisMapping"
-    REGEX = r"^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$"
 
-    mrid_dataframe = code.load_mrid_csv_file(MRID_FILEPATH)
+    mrid_dataframe = main.load_mrid_csv_file(ACLINESEGMENT_FILEPATH)
     # print(mrid_dataframe)
-    gis_dataframe = code.parse_excel_sheets_to_dataframe(GIS_FILEPATH, [SHEET_NAME])[
-        SHEET_NAME
-    ]
-    translated_names, none_translated_names = code.map_gis_to_ets_line_name(
-        gis_dataframe, GIS_COLUMN_NAME, REGEX
+    gis_dataframe = main.parse_excel_sheets_to_dataframe(
+        GIS_FILEPATH, [GIS_SHEET_NAME]
+    )[GIS_SHEET_NAME]
+    translated_names, none_translated_names = main.map_gis_to_ets_line_name(
+        gis_dataframe, GIS_LINE_NAME_COLUMN, LINE_NAME_REGEX
     )
     # Creating mapping between GIS and ETS if the names are not in agreement.
-    map_gis_ets_dataframe = code.parse_excel_sheets_to_dataframe(
-        MAP_FILEPATH, [MAP_SHEET]
-    )[MAP_SHEET]
+    map_gis_ets_dataframe = main.parse_excel_sheets_to_dataframe(
+        GIS_TO_ETS_MAP_FILEPATH, [MAP_SHEET_NAME]
+    )[MAP_SHEET_NAME]
     # Creating a dict from the mapping dataframe
-    map_gis_to_ets_name = code.parse_dataframe_columns_to_dictionary(
-        map_gis_ets_dataframe, MAP_COLUMN_GIS_NAME, MAP_COLUMN_ETS_NAME
+    map_gis_to_ets_name = main.parse_dataframe_columns_to_dictionary(
+        map_gis_ets_dataframe, MAP_GIS_LINE_NAME_COLUMN, MAP_ETS_LINE_NAME_COLUMN
     )
 
     translated_names = {
         k: map_gis_to_ets_name.get(v, v) for k, v in translated_names.items()
     }
 
-    TEST_DATAFRAME = pd.read_csv(TEST_DATA_FILEPATH, delimiter=";", encoding="cp1252")
+    TEST_DATAFRAME = pd.read_csv(TEST_DATA_FILEPATH, delimiter=";")
 
-    dataframe = code.enrich_dlr_dataframe(
+    dataframe = main.enrich_dlr_dataframe(
         gis_dataframe,
         mrid_dataframe,
         translated_names,
         none_translated_names,
-        GIS_COLUMN_NAME,
-        ETS_COLUMN_NAME,
+        GIS_LINE_NAME_COLUMN,
+        ACLINESEGMENT_LINE_NAME_COLUMN,
     )
 
     assert (

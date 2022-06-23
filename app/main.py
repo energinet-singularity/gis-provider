@@ -1,4 +1,4 @@
-# Module import
+# Library import
 from os import path, environ, stat
 from time import sleep, time
 from json import dumps
@@ -22,35 +22,39 @@ elif environ["DEBUG"].upper() == "TRUE":
     log.debug("Setting all logs to debug-level")
 else:
     raise ValueError(
-        f"'DEBUG' env. variable is '{environ['DEBUG']}', but must be either 'TRUE', 'FALSE' or unset."
+        "'DEBUG' env. variable is '%s', but must be either 'TRUE', 'FALSE' or unset.",
+        environ["DEBUG"],
     )
 
 # Input from user
 # API variables
 API_DB_NAME = environ.get("API_DB_NAME", "GIS_DATA")
-API_PORT = environ.get("API_PORT", "5000")
+API_PORT = int(environ.get("API_PORT", "5000"))
 MOCK_DATA = environ.get("MOCK_DATA", "False")
 # Variables for the data that should be enriched.
-GIS_FILENAME = environ.get(
-    "GIS_FILENAME", "GIS_Driftstr_luftledning_koordinater_decimalgrader_05042022.xls"
-)
-GIS_SHEET = environ.get("GIS_SHEET", "GIS_Driftstr_luftledning_koordi")
-GIS_COLUMN_NAME = environ.get("GIS_COLUMN_NAME", "Name")
+GIS_FILENAME = environ.get("GIS_FILENAME", "GIS_Driftstr_luftledning_koordinater.xls")
+GIS_SHEET_NAME = environ.get("GIS_SHEET", "GIS_Driftstr_luftledning_koordi")
+GIS_LINE_NAME_COLUMN = environ.get("GIS_COLUMN_NAME", "Name")
 LINE_NAME_REGEX = environ.get(
     "LINE_NAME_REGEX",
     r"^(?P<STN1>\w{3,4}?)_?(?P<volt>\d{3})_(?P<STN2>\w{3,4}?)(?P<id>\d)?$",
 )
-# ETS mapping environment variables.
-ETS_COLUMN_DLR_ENABLED = environ.get("ETS_DLR_ENABLED_COLUMN", "DLR_ENABLED")
-ETS_COLUMN_MRID = environ.get("ETS_MRID_COLUMN", "ACLINESEGMENT_MRID")
-ETS_FILENAME = environ.get("ETS_FILENAME", "seg_line_mrid_PROD.csv")
-ETS_COLUMN_NAME = environ.get("ETS_NAME_COLUMN", "LINE_EMSNAME")
+# ACLinesegment environment variables.
+ACLINESEGMENT_DLR_ENABLED_COLUMN = environ.get(
+    "ACLINESEGMENT_DLR_ENABLED_COLUMN", "DLR_ENABLED"
+)
+ACLINESEGMENT_MRID_NAME_COLUMN = environ.get(
+    "ACLINESEGMENT_MRID_NAME_COLUMN", "ACLINESEGMENT_MRID"
+)
+ACLINESEGMENT_FILENAME = environ.get("ACLINESEGMENT_FILENAME", "seg_line_mrid_PROD.csv")
+ACLINESEGMENT_LINE_NAME_COLUMN = environ.get(
+    "ACLINESEGMENT_LINE_NAME_COLUMN", "LINE_EMSNAME"
+)
 # Mapping variables to enforce a specific translation.
-MAP_COLUMN_GIS_NAME = environ.get("MAP_COLUMN_GIS_NAME", "GIS Name")
-MAP_COLUMN_ETS_NAME = environ.get("MAP_COLUMN_ETS_NAME", "ETS Name")
-MAP_FILENAME = environ.get("MAP_FILENAME", "Gis_map.xlsx")
-MAP_SHEET = environ.get("MAP_SHEET", "GisMapping")
-
+MAP_GIS_LINE_NAME_COLUMN = environ.get("MAP_GIS_LINE_NAME_COLUMN", "GIS LINE NAME")
+MAP_ETS_LINE_NAME_COLUMN = environ.get("MAP_ETS_LINE_NAME_COLUMN", "ETS LINE NAME")
+GIS_TO_ETS_MAP_FILENAME = environ.get("GIS_TO_ETS_MAP_FILENAME", "Gis_map.xlsx")
+MAP_SHEET_NAME = environ.get("MAP_SHEET_NAME", "GisMapping")
 
 # Docker folder (all new data is by configuration getting sent to the '/data/' folder)
 docker_folder = "/data/"
@@ -58,16 +62,17 @@ docker_folder = "/data/"
 # Checking to see if the user want to use mock data within the code.
 if MOCK_DATA.upper() == "TRUE":
     docker_folder = "/testdata/"
-    log.warning(f'Env. variable "MOCK_DATA" = {MOCK_DATA}. Using test-data for input.')
+    log.warning('Env. variable "MOCK_DATA" = %s. Using test-data for input.', MOCK_DATA)
 elif MOCK_DATA.upper() != "FALSE":
     raise ValueError(
-        f'"MOCK_DATA" env. variable is set to: "{MOCK_DATA}" but must be either: "True", "False" or unset.'
+        "'MOCK_DATA' env. variable is set to: '%s' but must be either: 'True', 'False' or unset.",
+        MOCK_DATA,
     )
 
 # Chosen filepaths
-MRID_FILEPATH = docker_folder + ETS_FILENAME
+ACLINESEGMENT_FILEPATH = docker_folder + ACLINESEGMENT_FILENAME
 GIS_FILEPATH = docker_folder + GIS_FILENAME
-MAP_FILEPATH = docker_folder + MAP_FILENAME
+GIS_TO_ETS_MAP_FILEPATH = docker_folder + GIS_TO_ETS_MAP_FILENAME
 
 
 def load_mrid_csv_file(file_path: str) -> pd.DataFrame:
@@ -124,11 +129,16 @@ def parse_excel_sheets_to_dataframe(
     try:
         df_dictionary = pd.read_excel(file_path, sheet_name=sheets, header=header_index)
         log.info(
-            f"Excel data from sheet(s): '{sheets}' in: '{file_path}' was parsed to dataframe dictionary."
+            "Excel data from sheet(s): '%s' in: '%s' was parsed to dataframe dictionary.",
+            sheets,
+            file_path,
         )
     except Exception as e:
         log.exception(
-            f"Parsing data from sheet(s): '{sheets}' in excel file: '{file_path}' failed with message: '{e}'."
+            "Parsing data from sheet(s): '%s' in excel file: '%s' failed with message: '%s'.",
+            sheets,
+            file_path,
+            e,
         )
         raise e
 
@@ -160,20 +170,25 @@ def parse_dataframe_columns_to_dictionary(
     for col_name in [dict_key, dict_value]:
         if col_name not in dataframe:
             raise ValueError(
-                f'The column "{col_name}" does not exist in the dataframe.'
+                'The column "%s" does not exist in the dataframe.', col_name
             )
 
     # Extract two columns from the dataframe and create a dictionary from them.
     try:
         dict_set = dataframe.set_index(dict_key)[dict_value].to_dict()
         log.info(
-            f'Dataframe was parsed to a dictionary with key: "{dict_key}" and value: "{dict_value}".'
+            'Dataframe was parsed to a dictionary with key: "%s" and value: "%s".',
+            dict_key,
+            dict_value,
         )
         log.debug(dumps(dict_set, indent=4, ensure_ascii=False))
 
     except Exception as e:
         log.exception(
-            f'Creating dictionary from dataframe columns "{dict_key}" and "{dict_value}" failed with message: {e}'
+            'Creating dictionary from dataframe columns "%s" and "%s" failed with message: %s',
+            dict_key,
+            dict_value,
+            e,
         )
         raise e
 
@@ -210,7 +225,7 @@ def map_gis_to_ets_line_name(
     # Checking column constant from the user input to ensure that column is found in the dataframe.
     if gis_column not in gis_dataframe:
         raise ValueError(
-            f'The column "{gis_column}" does not exist in the specified dataframe.'
+            'The column "%s" does not exist in the specified dataframe.', gis_column
         )
 
     # Removing spaces from the names in the gis_names
@@ -232,12 +247,12 @@ def map_gis_to_ets_line_name(
         else:
             non_translatable.append(name)
     log.info(
-        f'The specified regex: "{regex}" expression have been run on the input list.'
+        'The specified regex: "%s" expression have been run on the input list.', regex
     )
 
     # Review the non_translatable and informing the user if there is any names not translated
     if non_translatable:
-        log.warning(f"List of names not translated by the function:{non_translatable}")
+        log.warning("List of names not translated by the function:%s", non_translatable)
     else:
         log.info("All names from the GIS dataframe have been translated.")
 
@@ -246,7 +261,7 @@ def map_gis_to_ets_line_name(
 
 def enrich_dlr_dataframe(
     gis_dataframe: pd.DataFrame,
-    mrid_dataframe: pd.DataFrame,
+    aclinesegment_dataframe: pd.DataFrame,
     gis_line_name_to_ets_line_name: dict[str, str],
     bad_line_names: list[str],
     gis_column_name: str,
@@ -259,7 +274,7 @@ def enrich_dlr_dataframe(
     ----------
     gis_dataframe: pd.DataFrame
         Dataframe containing GIS data - the dataframe to enrich.
-    mrid_dataframe: pd.DataFrame
+    aclinesegment_dataframe: pd.DataFrame
         Dataframe containing ETS data
     gis_line_name_to_ets_line_name: dict[str, str]
         Mapping between gis line name and ets line name
@@ -284,12 +299,11 @@ def enrich_dlr_dataframe(
         gis_line_name_to_ets_line_name
     )
 
-    # TODO this seems very wierd looking at it, why remove data??
     # Removing any names that could not be translated to represent a clean dataframe that only contains
     # information that can be looked up with MRID.
     gis_dataframe = gis_dataframe[~gis_dataframe[gis_column_name].isin(bad_line_names)]
 
-    dlr_dataframe = mrid_dataframe.join(
+    dlr_dataframe = aclinesegment_dataframe.join(
         gis_dataframe.set_index(TEMP_COLUMN),
         on=ets_column_name,
         how="inner",
@@ -302,10 +316,10 @@ def enrich_dlr_dataframe(
 
 
 def verify_translated_names_against_ets(
-    translate_gis_name_to_ets: dict[str, str],
+    gis_to_ets_name: dict[str, str],
     dataframe: pd.DataFrame,
     ets_name_column: str,
-    ets_dlr_enabled_column: str,
+    dlr_enabled_column: str,
 ):
     """
     The function checks if there are lines in the ETS dataset which is not represented in the GIS dataset.
@@ -313,13 +327,13 @@ def verify_translated_names_against_ets(
 
     Parameters
     ----------
-    translate_gis_name_to_ets : dict[str, str]
+    gis_to_ets_name_mapping : dict[str, str]
         The dict containing the translated names from GIS.
     dataframe : pd.DataFrame
         Dataframe with all ETS information in.
     ets_name_column : str
         The specific column in the MRID dataframe that contains the names of lines.
-    ets_dlr_enabled_column : str
+    dlr_enabled_column : str
         Name of the column in mrid_dataframe which contains enabled state
     Returns
     -------
@@ -335,7 +349,7 @@ def verify_translated_names_against_ets(
         for line in (
             list(
                 set(dataframe[ets_name_column]).difference(
-                    list(translate_gis_name_to_ets.values())
+                    list(gis_to_ets_name.values())
                 )
             )
         )
@@ -343,21 +357,20 @@ def verify_translated_names_against_ets(
     )
 
     lines_not_in_gis.sort()
-    log.info(f"List of not found lines in GIS data set: {lines_not_in_gis}")
+    log.info("List of lines not found in GIS data set: %s", lines_not_in_gis)
 
     # Checking to see if there are lines in the MRID list with enabled DLR that
     # can not be found in GIS data
     lines_with_dlr_enabled = mrid_dataframe[
-        mrid_dataframe[ets_dlr_enabled_column].str.upper() == "YES"
+        mrid_dataframe[dlr_enabled_column].str.upper() == "YES"
     ][ets_name_column]
 
-    missing_gis_data = list(
-        set(lines_with_dlr_enabled) - set(translate_gis_name_to_ets.values())
-    )
+    missing_gis_data = list(set(lines_with_dlr_enabled) - set(gis_to_ets_name.values()))
 
     if missing_gis_data:
         log.error(
-            f"Some lines set up for DLR have no GIS data available, they are:{missing_gis_data}"
+            "Some lines set up for DLR have no GIS data available, they are: %s",
+            missing_gis_data,
         )
     else:
         log.info("Gis data is found for all lines in the MRID file with DLR enabled.")
@@ -368,14 +381,14 @@ if __name__ == "__main__":
     gis_time_init = mrid_time_init = 0
 
     gis_data_api = singuapi.DataFrameAPI(dbname=API_DB_NAME, port=API_PORT)
-    log.info(f"Started API on port {gis_data_api.web.port}")
+    log.info("Started API on port %d", gis_data_api.web.port)
 
     while True:
         start_time = time()
-        if path.isfile(GIS_FILEPATH) and path.isfile(MRID_FILEPATH):
+        if path.isfile(GIS_FILEPATH) and path.isfile(ACLINESEGMENT_FILEPATH):
             if (
                 stat(GIS_FILEPATH).st_mtime > gis_time_init
-                or stat(MRID_FILEPATH).st_mtime > mrid_time_init
+                or stat(ACLINESEGMENT_FILEPATH).st_mtime > mrid_time_init
             ):
                 if stat(GIS_FILEPATH).st_mtime > gis_time_init:
                     gis_time_init = stat(GIS_FILEPATH).st_mtime
@@ -383,77 +396,87 @@ if __name__ == "__main__":
                     # Parsing data from GIS excel file
                     log.info("New GIS file, importing new file.")
                     gis_dataframe = parse_excel_sheets_to_dataframe(
-                        GIS_FILEPATH, [GIS_SHEET]
-                    )[GIS_SHEET]
+                        GIS_FILEPATH, [GIS_SHEET_NAME]
+                    )[GIS_SHEET_NAME]
                     (
-                        translate_gis_name_to_ets,
+                        gis_to_ets_name_mapping,
                         non_translatable,
                     ) = map_gis_to_ets_line_name(
-                        gis_dataframe, GIS_COLUMN_NAME, LINE_NAME_REGEX
+                        gis_dataframe, GIS_LINE_NAME_COLUMN, LINE_NAME_REGEX
                     )
 
-                if stat(MRID_FILEPATH).st_mtime > mrid_time_init:
-                    mrid_time_init = stat(MRID_FILEPATH).st_mtime
+                if stat(ACLINESEGMENT_FILEPATH).st_mtime > mrid_time_init:
+                    mrid_time_init = stat(ACLINESEGMENT_FILEPATH).st_mtime
 
                     # Parsing data from MRID csv file
                     log.info("New MRID file, importing new file.")
-                    mrid_dataframe = load_mrid_csv_file(MRID_FILEPATH)
+                    mrid_dataframe = load_mrid_csv_file(ACLINESEGMENT_FILEPATH)
 
                 try:
                     # Creating mapping between GIS and ETS if the names are not in agreement.
                     map_gis_ets_dataframe = parse_excel_sheets_to_dataframe(
-                        MAP_FILEPATH, [MAP_SHEET]
-                    )[MAP_SHEET]
+                        GIS_TO_ETS_MAP_FILEPATH, [MAP_SHEET_NAME]
+                    )[MAP_SHEET_NAME]
 
                     # Creating a dict from the mapping dataframe
                     map_gis_to_ets_name = parse_dataframe_columns_to_dictionary(
-                        map_gis_ets_dataframe, MAP_COLUMN_GIS_NAME, MAP_COLUMN_ETS_NAME
+                        map_gis_ets_dataframe,
+                        MAP_GIS_LINE_NAME_COLUMN,
+                        MAP_ETS_LINE_NAME_COLUMN,
                     )
 
                     # Replacing the names in the original 'translate_gis_name_to_ets'
                     # with the mapping dict
-                    translate_gis_name_to_ets = {
+                    gis_to_ets_name_mapping = {
                         k: map_gis_to_ets_name.get(v, v)
-                        for k, v in translate_gis_name_to_ets.items()
+                        for k, v in gis_to_ets_name_mapping.items()
                     }
 
                 except Exception as e:
                     log.warning(
-                        f'Creating dataframe from "{MAP_FILEPATH}" failed with message: {e}. '
-                        + "Ensure that there is no need for forcing specific mapping names."
+                        """Creating dataframe from "%s" failed with message: %s.
+                        Ensure that there is no need for forcing specific mapping names.""",
+                        GIS_TO_ETS_MAP_FILEPATH,
+                        e,
                     )
 
                 # Logging difference between GIS and ETS names.
                 verify_translated_names_against_ets(
-                    translate_gis_name_to_ets,
+                    gis_to_ets_name_mapping,
                     mrid_dataframe,
-                    ETS_COLUMN_NAME,
-                    ETS_COLUMN_DLR_ENABLED,
+                    ACLINESEGMENT_LINE_NAME_COLUMN,
+                    ACLINESEGMENT_DLR_ENABLED_COLUMN,
                 )
 
                 # Creating the dlr dataframe with ETS data enriched with gis data
                 enriched_gis_data = enrich_dlr_dataframe(
                     gis_dataframe,
                     mrid_dataframe,
-                    translate_gis_name_to_ets,
+                    gis_to_ets_name_mapping,
                     non_translatable,
-                    GIS_COLUMN_NAME,
-                    ETS_COLUMN_NAME,
+                    GIS_LINE_NAME_COLUMN,
+                    ACLINESEGMENT_LINE_NAME_COLUMN,
                 )
 
                 log.info("Data collection is done.")
-                log.debug(f"Dataframe is: {enriched_gis_data}")
+                log.debug("Dataframe is: %s", enriched_gis_data)
 
                 # Passing the new dataframe to the API
                 gis_data_api[API_DB_NAME] = enriched_gis_data
 
             else:
                 log.info(
-                    f'Files at: "{GIS_FILEPATH}" and "{MRID_FILEPATH}" have not changed.'
+                    'Files at: "%s" and "%s" have not changed.',
+                    GIS_FILEPATH,
+                    ACLINESEGMENT_FILEPATH,
                 )
 
         else:
-            log.error(f'Files not found at: "{GIS_FILEPATH}" and "{MRID_FILEPATH}"')
+            log.error(
+                'Files not found at: "%s" and "%s"',
+                GIS_FILEPATH,
+                ACLINESEGMENT_FILEPATH,
+            )
 
-        log.info(f"Data collection took: {round(time() - start_time,4)} seconds")
+        log.debug("Data collection took: %f seconds", round(time() - start_time, 4))
         sleep(60)

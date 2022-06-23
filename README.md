@@ -120,7 +120,9 @@ If you are facing unidentified issues with the application, please submit an iss
 
 ## Version History
 * 1.1.0:
-    * Fixing issue #3 on Github
+    * Fixing issue #3 on Github.
+    The application is now merging data towards the ETS database instead of GIS.
+    This ensure that even if ETS have separated the line into more sections the data will be found on requested sections.
 * 1.0.1:
     * Added a service to the helm chart
 * 1.0.0:
