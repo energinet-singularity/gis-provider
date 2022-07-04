@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/energinet-singularity/gis-provider/energinet-singularity/gis-provider
   pullPolicy: IfNotPresent
-  tag: "1.1.0"
+  tag: "1.1.1"
 
 file-mover:
   folderMounts:
@@ -23,17 +23,15 @@ file-mover:
   affinity:
     podAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 1
-        podAffinityTerm:
-          labelSelector:
-            matchExpressions:
-              - key: gis-fm-provider
-                operator: In
-                values:
-                - S1
-          topologyKey: "kubernetes.io/hostname"
-
-replicaCount: 1
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: gis-fm-provider
+                  operator: In
+                  values:
+                    - S1
+            topologyKey: "kubernetes.io/hostname"
 
 podLabels:
   gis-fm-provider: "S1"
@@ -47,7 +45,7 @@ affinity:
             - key: fm-gis-provider
               operator: In
               values:
-              - S1
+                - S1
         topologyKey: "kubernetes.io/hostname"
 
 imagePullSecrets: []

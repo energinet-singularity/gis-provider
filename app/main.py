@@ -377,8 +377,8 @@ def verify_translated_names_against_ets(
 
 
 if __name__ == "__main__":
-    # Initialize of variables and API
-    gis_time_init = mrid_time_init = 0
+    # Initialize of variables and API.
+    gis_time_init = mrid_time_init = gis_map_time_init = 0
 
     gis_data_api = singuapi.DataFrameAPI(dbname=API_DB_NAME, port=API_PORT)
     log.info("Started API on port %d", gis_data_api.web.port)
@@ -389,6 +389,7 @@ if __name__ == "__main__":
             if (
                 stat(GIS_FILEPATH).st_mtime > gis_time_init
                 or stat(ACLINESEGMENT_FILEPATH).st_mtime > mrid_time_init
+                or stat(GIS_TO_ETS_MAP_FILEPATH).st_mtime > gis_map_time_init
             ):
                 if stat(GIS_FILEPATH).st_mtime > gis_time_init:
                     gis_time_init = stat(GIS_FILEPATH).st_mtime
@@ -412,33 +413,35 @@ if __name__ == "__main__":
                     log.info("New MRID file, importing new file.")
                     mrid_dataframe = load_mrid_csv_file(ACLINESEGMENT_FILEPATH)
 
-                try:
-                    # Creating mapping between GIS and ETS if the names are not in agreement.
-                    map_gis_ets_dataframe = parse_excel_sheets_to_dataframe(
-                        GIS_TO_ETS_MAP_FILEPATH, [MAP_SHEET_NAME]
-                    )[MAP_SHEET_NAME]
+                if stat(GIS_TO_ETS_MAP_FILEPATH).st_mtime > gis_map_time_init:
+                    gis_map_time_init = stat(GIS_TO_ETS_MAP_FILEPATH).st_mtime
+                    try:
+                        # Creating mapping between GIS and ETS if the names are not in agreement.
+                        map_gis_ets_dataframe = parse_excel_sheets_to_dataframe(
+                            GIS_TO_ETS_MAP_FILEPATH, [MAP_SHEET_NAME]
+                        )[MAP_SHEET_NAME]
 
-                    # Creating a dict from the mapping dataframe
-                    map_gis_to_ets_name = parse_dataframe_columns_to_dictionary(
-                        map_gis_ets_dataframe,
-                        MAP_GIS_LINE_NAME_COLUMN,
-                        MAP_ETS_LINE_NAME_COLUMN,
-                    )
+                        # Creating a dict from the mapping dataframe
+                        map_gis_to_ets_name = parse_dataframe_columns_to_dictionary(
+                            map_gis_ets_dataframe,
+                            MAP_GIS_LINE_NAME_COLUMN,
+                            MAP_ETS_LINE_NAME_COLUMN,
+                        )
 
-                    # Replacing the names in the original 'translate_gis_name_to_ets'
-                    # with the mapping dict
-                    gis_to_ets_name_mapping = {
-                        k: map_gis_to_ets_name.get(v, v)
-                        for k, v in gis_to_ets_name_mapping.items()
-                    }
+                        # Replacing the names in the original 'translate_gis_name_to_ets'
+                        # with the mapping dict
+                        gis_to_ets_name_mapping = {
+                            k: map_gis_to_ets_name.get(v, v)
+                            for k, v in gis_to_ets_name_mapping.items()
+                        }
 
-                except Exception as e:
-                    log.warning(
-                        """Creating dataframe from "%s" failed with message: %s.
-                        Ensure that there is no need for forcing specific mapping names.""",
-                        GIS_TO_ETS_MAP_FILEPATH,
-                        e,
-                    )
+                    except Exception as e:
+                        log.warning(
+                            """Creating dataframe from "%s" failed with message: %s.
+                            Ensure that there is no need for forcing specific mapping names.""",
+                            GIS_TO_ETS_MAP_FILEPATH,
+                            e,
+                        )
 
                 # Logging difference between GIS and ETS names.
                 verify_translated_names_against_ets(
@@ -466,9 +469,10 @@ if __name__ == "__main__":
 
             else:
                 log.info(
-                    'Files at: "%s" and "%s" have not changed.',
+                    'Files at: "%s", "%s" and "%s" have not changed.',
                     GIS_FILEPATH,
                     ACLINESEGMENT_FILEPATH,
+                    GIS_TO_ETS_MAP_FILEPATH,
                 )
 
         else:
