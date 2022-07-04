@@ -120,6 +120,9 @@ See the open issues for a full list of proposed features (and known issues).
 If you are facing unidentified issues with the application, please submit an issue or ask the authors.
 
 ## Version History
+* 1.1.1:
+    * Added an option for the Gis mapping file to update without the need of updating any other files.
+    * Added http on the service
 * 1.1.0:
     * Fixing issue #3 on Github.
     The application is now merging data towards the ETS database instead of GIS.
